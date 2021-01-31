@@ -12,6 +12,6 @@ Este sistema de dificultad implementará tres dificultades iniciales:
 
 - **Facil**: Siendo este el modo sin entrenamiento de la maquina y solo conociendo las reglas del juego.
     
-- Normal: Un estado de la maquina en el que ya haya tenido conocimiento y aprendizaje del transcurso del juego y sea capaz de ganarnos alguna partida inicial.
+- **Normal**: Un estado de la maquina en el que ya haya tenido conocimiento y aprendizaje del transcurso del juego y sea capaz de ganarnos alguna partida inicial.
     
-- Dificil: Una maquina ya entrenada con conocimiento suficiente del juego para obligarnos a mejorar nuestras estrategias si queremos vencerla.
+- **Dificil**: Una maquina ya entrenada con conocimiento suficiente del juego para obligarnos a mejorar nuestras estrategias si queremos vencerla.
