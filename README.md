@@ -2,7 +2,7 @@
 
 ## Realización de un programa de aprendizaje en juegos
 
-En este trabajo vamos a implementar un código en Haskell que nos permita jugar a los juegos del **3 en raya** y al **juego del OSO** contra la máquina.
+En este trabajo vamos a implementar un código en Haskell que nos permita jugar a los juegos del **TIC-TAC-TOE** y al **Juego del OSO** contra la máquina.
 
 Para empezar, la máquina tendrá un conocimiento limitado del juego, conociendo simplemente las reglas de este y como poder jugarlo. A continuación modificaremos la máquina para que vaya teniendo un aprendizaje de mejora en el juego, y sea cada vez mas dificil ganarle.
 
@@ -15,3 +15,7 @@ Este sistema de dificultad implementará tres dificultades iniciales:
 - **Normal**: Un estado de la maquina en el que ya haya tenido conocimiento y aprendizaje del transcurso del juego y sea capaz de ganarnos alguna partida inicial.
     
 - **Dificil**: Una maquina ya entrenada con conocimiento suficiente del juego para obligarnos a mejorar nuestras estrategias si queremos vencerla.
+
+El programa incluira una interfaz externa con una interfaz agradable y cómoda para el usuario, en la cual podrá empezar una partida nueva, continuar la última partida guardada, cargar partidas guardadas, acceder a unos ajustes de la aplicación y finalmente una opción para salir de la aplicación.
+
+En pleno juego tendremos un menú de pausa que nos permitirá continuar la partida que estamos jugando; guardar el estado de la partida actual, esto almacenara en memoria la distribución actual del tablero y el grado de dificultad que tenga la máquina en el momento actual; cargar otras partidas almacenadas en memoria, modificar los ajustes de la aplicación y salir de la aplicación.
