@@ -89,28 +89,30 @@ siguiente :: Int -> Int
 siguiente j = if j == 1 then 2 else 1
 
 -- Función para gestionar que entren índices que estén dentro de la cuadrícula.
-revisaIn :: (Int,Int) -> (Int,Int)
+revisaIn :: (Int,Int) -> IO (Int,Int)
 revisaIn (i,j) = do
-    f <- leeDigito "Primero indica la fila: "
-    c <- leeDigito "Ahora indica la columna: "
+    f <- leeDigito "-Primero indica la fila: "
+    c <- leeDigito "-Ahora indica la columna: "
     if (f>=i && f<=j) && (c>=i && c<=j)
-        then (f, c)
-        else error "Fila o columna fuera de la cuadrícula. Vuelva a escoger."
+        then return (f, c)
+        else do
+            putStrLn "¡Fila o columna fuera de la cuadrícula. Vuelva a escoger!"
+            revisaIn (i,j)
 
 -- Función para continuar una partida. Recibe la cuadrícula estado del juego y el jugador que tiene turno.
 juegoMedio :: Cuadricula -> Int -> IO()
 juegoMedio c j = do
-    putStrLn "Estado del juego:"
+    putStrLn "Estado del juego:\n"
     representaCuadricula c
-    putStrLn $ "Le toca al jugador " ++ (show j)
+    putStrLn $ "-Le toca al jugador " ++ (show j)
     let rangosC = bounds c
     let par1 = fst rangosC
     let par2 = snd rangosC
     let menor = fst par1
     let mayor = snd par2
-    putStr "Para escoger casilla recuerda que los números que puedes escoger oscilan entre "
+    putStr "-Para escoger casilla recuerda que los números que puedes escoger oscilan entre "
     putStrLn $ (show menor) ++ " y " ++ (show mayor) ++ "."
-    let (fil,col) = revisaIn (menor,mayor)
+    (fil,col) <- revisaIn (menor,mayor)
     let v = devuelveChar j
     let cn = jugada c (fil,col) v
     gestionaTurno cn j
@@ -121,8 +123,10 @@ gestionaTurno :: Cuadricula -> Int -> IO()
 gestionaTurno c j = do
     if (finalizado c)
         then if (llena c)
-            then putStrLn "Empate"
-            else putStrLn $ "El jugador "++(show j)++" ha ganado."
+            then putStrLn "Empate..."
+            else do
+                representaCuadricula c
+                putStrLn $ "¡El jugador "++(show j)++" ha ganado!"
         else do
             let jn = siguiente j
             juegoMedio c jn

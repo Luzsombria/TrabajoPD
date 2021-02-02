@@ -60,7 +60,7 @@ separa n xs
 
 -- Traspuesta de una Matriz.
 traspuesta :: Matriz a -> Matriz a
-traspuesta p = array((0,0),(nf-1,nc-1)) [((i,j), p!(j,i)) | i <- [0..nf-1], j <- [0..nc-1]]
+traspuesta p = array((0,0),(nf,nc)) [((i,j), p!(j,i)) | i <- [0..nf], j <- [0..nc]]
     where 
         nf = numColumnas p
         nc = numFilas p
@@ -77,10 +77,10 @@ listaColumnas p = listaFilas $ traspuesta p
 
 -- Funciones para conseguir los n primeros valores de las diagonales principal y secundaria de una Matriz.
 diagonalPMatriz :: Int -> Matriz a -> [a]
-diagonalPMatriz n p = [p ! (x,x) | x<-[0..n-1]]
+diagonalPMatriz n p = [p ! (x,x) | x<-[0..n]]
 
 diagonalSMatriz :: Int -> Matriz a -> [a]
-diagonalSMatriz n p = [p ! (x,n-x-1) | x<-[0..n-1]]
+diagonalSMatriz n p = [p ! (x,n-x) | x<-[0..n]]
 
 -- Función para conseguir ambas diagonales en una lista de listas.
 diagonalesMatriz :: Matriz a -> [[a]]
