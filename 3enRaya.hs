@@ -11,6 +11,7 @@ import Data.Char
 -- Inicializamos las variables que necesitaremos para este juego.
 cj1 = 'X'
 cj2 = 'O'
+numeroDeFilas = 3
 
 
 -- Función main
@@ -130,3 +131,71 @@ gestionaTurno c j = do
         else do
             let jn = siguiente j
             juegoMedio c jn
+
+-- Función para generar una partida nueva.
+partidaNueva :: IO ()
+partidaNueva = do
+    putStrLn "¿Quiere empezar el jugador con X o con O?"
+    putStrLn "Escriba 'X' o 'O' por favor."
+    eleccion <- getChar
+    if ((eleccion=='X') || (eleccion=='O'))
+        then if eleccion == 'X'
+            then do
+                let j = 1
+                juegoMedio inicial j
+            else do
+                let j = 2
+                juegoMedio inicial j
+        else do
+            putStrLn "Carácter inválido. Vuelva a intentarlo."
+            partidaNueva
+
+-- Función para cargar partida. Supondremos que los datos de los guardados son siempre correctos.
+cargarPartida :: IO String
+cargarPartida = do
+    putStrLn "Escriba el nombre del fichero que guarda la partida"
+    fichero <- getLine
+    existe <- doesFileExist fichero
+    contenido <- if existe then readFile fichero else return "Error, este fichero no existe en el directorio actual."
+    let lineas = [l | l<-lines contenido, length l > 1]
+    return (concat lineas)
+
+-- Función para crear un guardado del juego.
+guardarPartida :: Cuadricula -> Int -> FilePath -> IO ()
+guardarPartida c j nombre = do
+    let estado = elems c
+    let jugador = show j
+    let texto = estado++"\n"++jugador
+    writeFile nombre texto
+
+-- Funciones para iniciar o cargar el juego. A estas funciones son a las que acabará llamando el main.
+-- ------------------------------------------------------------------------
+iniciaJuego :: IO ()
+iniciaJuego = do
+    putStrLn "¿Quieres empezar un juego nuevo o cargar una partida?"
+    putStrLn "Escribe 'nuevo' o 'cargar' por favor"
+    respuesta <- getLine
+    trataR respuesta
+
+-- Función para tratar con la respuesta del usuario.
+trataR :: String -> IO ()
+trataR r
+    | r == "nuevo" = partidaNueva
+    | r == "cargar" = do
+        let datos = cargarPartida
+        let c = traduceCadena (init datos) 3
+        let j = (last datos) :: Int
+        if (finalizado c)
+            then if (llena c)
+                then putStrLn "Empate..."
+                else do
+                    representaCuadricula c
+                    let jn = siguiente j
+                    putStrLn $ "¡El jugador "++(show jn)++" ha ganado!"
+            else do
+                juegoMedio c j
+    | otherwise = do
+        putStrLn "Entrada no válida. Inténtelo de nuevo"
+        respuesta <- getLine
+        trataR respuesta
+-- ------------------------------------------------------------------------

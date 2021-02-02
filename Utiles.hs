@@ -10,7 +10,8 @@ module Utiles
      diagonalesMatriz,
      actualizaValor,
      valido,
-     escribeCuadricula
+     escribeCuadricula,
+     traduceCadena
     ) where
 -- ------------------------------------------------------------------------
 
@@ -121,4 +122,10 @@ escribeGuiones n
     | n == 0 = []
     | otherwise = "----"++(escribeGuiones (n-1))
 -- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+-- Función para crear una Matriz de tipo Char a partir de un String dado.
+traduceCadena :: String -> Int -> Matriz Char
+traduceCadena cs n = array ((0,0),(n-1,n-1)) [(is,c) | (is,c)<-zip ind cs]
+    where ind = [(i,j) | i<-[0..n-1],j<-[0..n-1]]
+
 -- ------------------------------------------------------------------------
