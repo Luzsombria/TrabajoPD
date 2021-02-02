@@ -7,7 +7,10 @@ module Utiles
      matrizUnitaria,
      listaFilas,
      listaColumnas,
-     diagonalesMatriz
+     diagonalesMatriz,
+     actualizaValor,
+     valido,
+     escribeCuadricula
     ) where
 -- ------------------------------------------------------------------------
 
@@ -92,4 +95,30 @@ actualizaValor (i,j) v p = listaMatriz ass
           as = [if ind == j then v else x | (x,ind)<-zip xs [0..]]
           ass = [if ind == i then as else ss | (ss,ind)<-zip xss [0..]]
 
+-- La siguiente función es para validar un movimiento en cualquiera de los dos juegos. Básicamente, comprueba
+-- que la casilla a ocupar por el movimiento no esté ya cogida, y comprueba que el movimiento no esté fuera de rango
+-- de la Matriz usada.
+valido :: (Int,Int) -> Matriz Char -> Bool
+valido (i,j) p = (v==' ') && (i>=imi && i<=ima) && (j>=jmi && j<=jma)
+    where v = p ! (i,j)
+          rangos = bounds p
+          (imi,jmi) = fst rangos
+          (ima,jma) = snd rangos
+
+-- Funciones pintar las cuadrículas que necesitemos.
+-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+escribeCuadricula :: [String] -> String
+escribeCuadricula [] = []
+escribeCuadricula (xs:xss) = ((escribeFila xs)++"\n"++guiones++"\n")++(escribeCuadricula xss)
+    where guiones = escribeGuiones (length xs)
+
+escribeFila :: [Char] -> String
+escribeFila [] = []
+escribeFila (x:xs) = " "++(x:" |")++(escribeFila xs)
+
+escribeGuiones :: Int -> String
+escribeGuiones n
+    | n == 0 = []
+    | otherwise = "----"++(escribeGuiones (n-1))
+-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 -- ------------------------------------------------------------------------
