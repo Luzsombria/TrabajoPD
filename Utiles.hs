@@ -18,6 +18,8 @@ module Utiles
 -- Módulos importados
 -- ------------------------------------------------------------------------
 import Data.Array
+import Data.List
+import System.Random
 -- ------------------------------------------------------------------------
 
 -- Definimos el tipo Matriz que vamos a usar para los estados de nuestro juego. En este caso, las matrices tendrán
@@ -135,5 +137,14 @@ traduceCadena cs n = array ((0,0),(n-1,n-1)) [(is,c) | (is,c)<-zip ind cs]
 -- ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 -- Funciones sobre aprendizaje automático
 -- ------------------------------------------------------------------------
+
+-- Función para generar n números aleatorios dentro del rango [0,n).
+generaAleatorios :: Int -> [Int]
+generaAleatorios n = [mod x n | x<-listaA]
+    where listaA = take n $ randoms (mkStdGen n)
+
+-- Función para generar todas las posibles posiciones en un tablero de tamaño n.
+posiblesPosiciones :: Int -> [[(Int,Int)]]
+posiblesPosiciones n = permutations [(i,j) | i<-[0..n-1],j<-[0..n-1]]
 
 -- ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
