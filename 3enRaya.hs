@@ -16,7 +16,7 @@ numeroDeFilas = 3
 
 -- Función main
 main :: IO()
-main = undefined
+main = iniciaJuego
 
 -- También definimos el tipo Cuadricula que va a ser la referencia para el correcto desarrollo del juego. El tipo 'a' de la
 -- Matriz lo vamos a sustituir por Char ya que vamos a usar 'X' y 'O' para representar los círculos y cruces del juego.
@@ -56,10 +56,23 @@ hay3EnRaya c = or [if x==3 then True else False | x<-lss]
 -- ------------------------------------------------------------------------
 
 -- Función para realizar una jugada.
-jugada :: Cuadricula -> (Int,Int) -> Char -> Cuadricula
+jugada :: Cuadricula -> (Int,Int) -> Char -> IO Cuadricula
 jugada c (i,j) v
-    | valido (i,j) c = actualizaValor (i,j) v c
-    | otherwise = error "Jugada no válida."
+    | valido (i,j) c = do
+        let cn = actualizaValor (i,j) v c
+        return cn
+    | otherwise = do
+        putStrLn "Jugada no válida, vuelva a intentarlo."
+        putStrLn "-Recuerde que no puede pintar casillas ya ocupadas."
+        let rangosC = bounds c
+        let par1 = fst rangosC
+        let par2 = snd rangosC
+        let menor = fst par1
+        let mayor = snd par2
+        putStr "-Para escoger casilla recuerda que los números que puedes escoger oscilan entre "
+        putStrLn $ (show menor) ++ " y " ++ (show mayor) ++ "."
+        (fil,col) <- revisaIn (menor,mayor)
+        jugada c (fil,col) v
 
 -- Función para representar el estado del juego en consola.
 representaCuadricula :: Cuadricula -> IO()
@@ -115,7 +128,7 @@ juegoMedio c j = do
     putStrLn $ (show menor) ++ " y " ++ (show mayor) ++ "."
     (fil,col) <- revisaIn (menor,mayor)
     let v = devuelveChar j
-    let cn = jugada c (fil,col) v
+    cn <- jugada c (fil,col) v
     gestionaTurno cn j
 
 -- Función para manejar lo que le ocurre al juego entre turno y turno. Esta función se usará también para
@@ -130,13 +143,21 @@ gestionaTurno c j = do
                 putStrLn $ "¡El jugador "++(show j)++" ha ganado!"
         else do
             let jn = siguiente j
-            juegoMedio c jn
+            putStrLn "¿Desea guardar partida?"
+            putStrLn "Si desea guardar partida escriba <<SI>> por favor"
+            deseo <- getLine
+            if deseo == "SI"
+                then do
+                    putStrLn "En ese caso escriba un nombre para el archivo de guardado"
+                    nombre <- getLine
+                    guardarPartida c jn nombre
+                else juegoMedio c jn
 
 -- Función para generar una partida nueva.
 partidaNueva :: IO ()
 partidaNueva = do
     putStrLn "¿Quiere empezar el jugador con X o con O?"
-    putStrLn "Escriba 'X' o 'O' por favor."
+    putStrLn "Escriba 'O' o 'X' por favor."
     eleccion <- getChar
     if ((eleccion=='X') || (eleccion=='O'))
         then if eleccion == 'X'
@@ -156,8 +177,9 @@ cargarPartida = do
     putStrLn "Escriba el nombre del fichero que guarda la partida"
     fichero <- getLine
     existe <- doesFileExist fichero
-    contenido <- if existe then readFile fichero else return "Error, este fichero no existe en el directorio actual."
-    let lineas = [l | l<-lines contenido, length l > 1]
+    contenido <- if existe then readFile fichero else error "Error, este fichero no existe en el directorio actual."
+    let lineas = [l | l<-lines contenido, length l > 0]
+    putStr (last lineas)
     return (concat lineas)
 
 -- Función para crear un guardado del juego.
@@ -182,9 +204,9 @@ trataR :: String -> IO ()
 trataR r
     | r == "nuevo" = partidaNueva
     | r == "cargar" = do
-        let datos = cargarPartida
+        datos <- cargarPartida
         let c = traduceCadena (init datos) 3
-        let j = (last datos) :: Int
+        let j = digitToInt (last datos)
         if (finalizado c)
             then if (llena c)
                 then putStrLn "Empate..."
