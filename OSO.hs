@@ -10,9 +10,9 @@ import System.IO
 -- ------------------------------------------------------------------------
 
 -- Inicializamos las variables que necesitaremos para este juego.
+numeroDeFilas4 = 4
 numeroDeFilas5 = 5
 numeroDeFilas8 = 8
-numeroDeFilas11 = 11
 
 
 -- Función main
@@ -149,6 +149,7 @@ gestionaTurno c j puntuaciones = do
                 putStrLn $ "¡El jugador "++(show j)++" ha ganado!"
         else do
             let jn = siguiente j
+            representaCuadricula c
             putStrLn "¿Desea guardar partida?"
             putStrLn "Si desea guardar partida escriba <<SI>> por favor"
             deseo <- getLine
@@ -157,4 +158,10 @@ gestionaTurno c j puntuaciones = do
                     putStrLn "En ese caso escriba un nombre para el archivo de guardado"
                     nombre <- getLine
                     guardarPartida c jn nombre
+                    putStrLn "¿Desea seguir jugando?"
+                    putStrLn "Si desea seguir jugando escriba <<SI>> por favor. En caso contrario se entenderá como que no."
+                    deseo2 <- getLine
+                    if deseo2=="SI"
+                        then juegoMedio c jn
+                        else return ()
                 else juegoMedio c jn
