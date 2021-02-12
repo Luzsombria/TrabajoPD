@@ -6,6 +6,7 @@ import Utiles
 import System.Directory
 import Data.Array
 import Data.Char
+import System.IO
 -- ------------------------------------------------------------------------
 
 -- Inicializamos las variables que necesitaremos para este juego.
@@ -55,6 +56,39 @@ hay3EnRaya c = or [if x==3 then True else False | x<-lss]
           lss = [length x | x<-ess]
 -- ------------------------------------------------------------------------
 
+-- Función que nos devuelve el carácter que usa cada jugador.
+devuelveChar :: Int -> Char
+devuelveChar j
+    | j == 1 = cj1
+    | otherwise = cj2
+
+-- Función para conseguir los dígitos que vamos a necesitar en nuestra interacción.
+leeDigito :: String -> IO Int
+leeDigito c = do
+    putStr c
+    digito <- getLine
+    if (length digito == 1) && isDigit (head digito)
+        then return (read digito)
+        else do 
+            putStrLn "ERROR: No has introducido un dígito"
+            d <- leeDigito c
+            return d
+
+-- Función para cambiar de jugador 1 a jugador 2.
+siguiente :: Int -> Int
+siguiente j = if j == 1 then 2 else 1
+
+-- Función para gestionar que entren índices que estén dentro de la cuadrícula.
+revisaIn :: (Int,Int) -> IO (Int,Int)
+revisaIn (i,j) = do
+    f <- leeDigito "-Primero indica la fila: "
+    c <- leeDigito "-Ahora indica la columna: "
+    if (f>=i && f<=j) && (c>=i && c<=j)
+        then return (f, c)
+        else do
+            putStrLn "¡Fila o columna fuera de la cuadrícula. Vuelva a escoger!"
+            revisaIn (i,j)
+
 -- Función para realizar una jugada.
 jugada :: Cuadricula -> (Int,Int) -> Char -> IO Cuadricula
 jugada c (i,j) v
@@ -80,38 +114,6 @@ representaCuadricula c = do
     let fs = listaFilas c
     let cuadricula = escribeCuadricula fs
     putStrLn cuadricula
-
--- Función que nos devuelve el carácter que usa cada jugador.
-devuelveChar :: Int -> Char
-devuelveChar j
-    | j == 1 = cj1
-    | otherwise = cj2
-
--- Función para conseguir los dígitos que vamos a necesitar en nuestra interacción.
-leeDigito :: String -> IO Int
-leeDigito c = do
-    putStr c
-    digito <- getChar
-    if isDigit digito
-        then return (digitToInt digito)
-        else do 
-            putStrLn "ERROR: No has introducido un dígito"
-            leeDigito c
-
--- Función para cambiar de jugador 1 a jugador 2.
-siguiente :: Int -> Int
-siguiente j = if j == 1 then 2 else 1
-
--- Función para gestionar que entren índices que estén dentro de la cuadrícula.
-revisaIn :: (Int,Int) -> IO (Int,Int)
-revisaIn (i,j) = do
-    f <- leeDigito "-Primero indica la fila: "
-    c <- leeDigito "-Ahora indica la columna: "
-    if (f>=i && f<=j) && (c>=i && c<=j)
-        then return (f, c)
-        else do
-            putStrLn "¡Fila o columna fuera de la cuadrícula. Vuelva a escoger!"
-            revisaIn (i,j)
 
 -- Función para continuar una partida. Recibe la cuadrícula estado del juego y el jugador que tiene turno.
 juegoMedio :: Cuadricula -> Int -> IO()
@@ -143,6 +145,7 @@ gestionaTurno c j = do
                 putStrLn $ "¡El jugador "++(show j)++" ha ganado!"
         else do
             let jn = siguiente j
+            representaCuadricula c
             putStrLn "¿Desea guardar partida?"
             putStrLn "Si desea guardar partida escriba <<SI>> por favor"
             deseo <- getLine
@@ -151,6 +154,12 @@ gestionaTurno c j = do
                     putStrLn "En ese caso escriba un nombre para el archivo de guardado"
                     nombre <- getLine
                     guardarPartida c jn nombre
+                    putStrLn "¿Desea seguir jugando?"
+                    putStrLn "Si desea seguir jugando escriba <<SI>> por favor. En caso contrario se entenderá como que no."
+                    deseo2 <- getLine
+                    if deseo2=="SI"
+                        then juegoMedio c jn
+                        else return ()
                 else juegoMedio c jn
 
 -- Función para generar una partida nueva.
