@@ -6,24 +6,23 @@ import Utiles
 import System.Directory
 import Data.Array
 import Data.Char
+import Data.List
 import System.IO
 -- ------------------------------------------------------------------------
 
--- Inicializamos las variables que necesitaremos para este juego.
-numeroDeFilas4 = 4
-numeroDeFilas5 = 5
-numeroDeFilas8 = 8
-
-
 -- Función main
 main :: IO()
-main = undefined
+main = iniciaJuego
 
--- También definimos el tipo Cuadricula que va a ser la referencia para el correcto desarrollo del juego. El tipo 'a' de la
+-- Definimos el tipo Cuadricula que va a ser la referencia para el correcto desarrollo del juego. El tipo 'a' de la
 -- Matriz lo vamos a sustituir por Char ya que vamos a usar 'O' y 'S' para formar la palabra OSO.
 type Cuadricula = Matriz Char
 
--- Creamos la cuadrícula vacía del tamaño escogido para comenzar un nuevo juego.
+-- Necesitaremos una función que nos cree cuadrículas con los valores que necesitemos más adelante.
+creaCruadricula :: (Int,Int) -> [Char] -> Cuadricula
+creaCruadricula is vs = matrizNueva is vs
+
+-- Creamos la Cuadrícula vacía del tamaño escogido para comenzar un nuevo juego.
 inicial :: Int -> Cuadricula
 inicial tam = matrizUnitaria tam ' '
 
@@ -32,7 +31,7 @@ inicial tam = matrizUnitaria tam ' '
 finalizado :: Cuadricula -> Bool
 finalizado c = (llena c)
 
--- Función para saber si la Cuadrícula del juego que nos pasan ya está llena.
+-- Función auxiliar para saber si la Cuadrícula del juego que nos pasan ya está llena.
 llena :: Cuadricula -> Bool
 llena c = (length es) == suma
     where es = elems c
@@ -42,7 +41,7 @@ llena c = (length es) == suma
 
 -- ------------------------------------------------------------------------
 
--- También vamos a necesitar puntuar todas las veces que se forme la palabra OSO en una cuadrícula de 3x3.
+-- También vamos a necesitar puntuar todas las veces que se forme la palabra OSO en una Cuadrícula de 3x3.
 puntuaOSO :: Cuadricula -> Int
 puntuaOSO c = div (length es) 3
     where fs = listaFilas c
@@ -65,7 +64,7 @@ leeDigito c = do
             d <- leeDigito c
             return d
 
--- Función para gestionar que entren índices que estén dentro de la cuadrícula.
+-- Función para gestionar que entren índices que estén dentro de la Cuadrícula.
 revisaIn :: (Int,Int) -> IO (Int,Int)
 revisaIn (i,j) = do
     f <- leeDigito "-Primero indica la fila: "
@@ -109,7 +108,7 @@ siguiente j = if j == 1 then 2 else 1
 -- Función para conseguir el carácter pedido en la interacción.
 devuelveChar :: String -> IO Char
 devuelveChar c = do
-    putStr c
+    putStrLn c
     car <- getChar
     if (car=='O' || car=='S')
         then return car
@@ -118,7 +117,36 @@ devuelveChar c = do
             d <- devuelveChar c
             return d
 
--- Función para continuar una partida. Recibe la cuadrícula estado del juego y el jugador que tiene turno.
+-- Funciones para ayudar con los cálculos de las puntuaciones.
+-- ------------------------------------------------------------------------
+
+-- Primero vamos a dividir en dos los cálculos para reducir su dificultad.
+calculaPuntuacion :: Cuadricula -> (Int,Int) -> Char -> Int
+calculaPuntuacion c (i,j) v
+    | v=='O' = calculaPuntuacionO c (i,j)
+    | otherwise = calculaPuntuacionS c (i,j)
+
+-- De los dos cálculos posibles, el de 'S' es más sencillo ya que sólo necesitamos observar una posible Cuadrícula de 3x3.
+calculaPuntuacionS :: Cuadricula -> (Int,Int) -> Int
+calculaPuntuacionS c (i,j) = puntuaOSO acotada
+    where lc = snd $ snd $ bounds c
+          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc]
+          nfilas = length $ nub [fst ind | ind<-alrededor]
+          nCols = length $ nub [snd ind | ind<-alrededor]
+          es = [c ! p | p<-alrededor]
+          acotada = creaCruadricula (nfilas,nCols) es
+
+-- Con esta, vamos a aprovecharnos de la construida hace un momento para calcular la puntuación cuando se coloca una 'S'.
+-- La idea es coger todas aquellas Cuadrículas de alrededor de nuestra 'O' y fijarnos si llevan 'S', en cuyo caso
+-- sólo habría que calcular las puntuaciones de las 'S', por lo que volvemos a la función anterior.
+calculaPuntuacionO :: Cuadricula -> (Int,Int) -> Int
+calculaPuntuacionO c (i,j) = sum [calculaPuntuacionS c ind | ind<-contienenS]
+    where lc = snd $ snd $ bounds c
+          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc]
+          contienenS = [ind | ind<-alrededor,(c ! ind)=='S']
+
+-- ------------------------------------------------------------------------
+-- Función para continuar una partida. Recibe la Cuadrícula estado del juego y el jugador que tiene turno.
 juegoMedio :: Cuadricula -> Int -> (Int,Int) -> IO()
 juegoMedio c j puntuaciones = do
     putStrLn "Estado del juego:\n"
@@ -135,18 +163,29 @@ juegoMedio c j puntuaciones = do
     (fil,col) <- revisaIn (menor,mayor)
     v <- devuelveChar "-Indique si quiere colocar una 'O' o una 'S'"
     cn <- jugada c (fil,col) v
-    gestionaTurno cn j puntuaciones
+    let calculo = calculaPuntuacion cn (fil,col) v
+    if j == 1
+        then do
+            let nuevasP = (calculo, snd puntuaciones)
+            gestionaTurno cn j nuevasP
+        else do
+            let nuevasP = (fst puntuaciones, calculo)
+            gestionaTurno cn j nuevasP
 
 -- Función para manejar lo que le ocurre al juego entre turno y turno. Esta función se usará también para
 -- gestionar el comienzo de un juego nuevo en el main.
 gestionaTurno :: Cuadricula -> Int -> (Int,Int) -> IO()
 gestionaTurno c j puntuaciones = do
     if (finalizado c)
-        then if (llena c)
+        then if (fst puntuaciones)==(snd puntuaciones)
             then putStrLn "Empate..."
-            else do
-                representaCuadricula c
-                putStrLn $ "¡El jugador "++(show j)++" ha ganado!"
+            else if (fst puntuaciones)>(snd puntuaciones)
+                then do
+                    representaCuadricula c
+                    putStrLn "¡El jugador 1 ha ganado!"
+                else do
+                    representaCuadricula c
+                    putStrLn "¡El jugador 2 ha ganado!"
         else do
             let jn = siguiente j
             representaCuadricula c
@@ -157,11 +196,76 @@ gestionaTurno c j puntuaciones = do
                 then do
                     putStrLn "En ese caso escriba un nombre para el archivo de guardado"
                     nombre <- getLine
-                    guardarPartida c jn nombre
+                    guardarPartida c jn puntuaciones nombre
                     putStrLn "¿Desea seguir jugando?"
                     putStrLn "Si desea seguir jugando escriba <<SI>> por favor. En caso contrario se entenderá como que no."
                     deseo2 <- getLine
                     if deseo2=="SI"
-                        then juegoMedio c jn
+                        then juegoMedio c jn puntuaciones
                         else return ()
-                else juegoMedio c jn
+                else juegoMedio c jn puntuaciones
+
+-- Función para generar una partida nueva.
+partidaNueva :: IO ()
+partidaNueva = do juegoMedio (inicial 8) 1 (0,0)
+
+-- Función para cargar partida. Supondremos que los datos de los guardados son siempre correctos.
+cargarPartida :: IO [String]
+cargarPartida = do
+    putStrLn "-Escriba el nombre del fichero que guarda la partida"
+    fichero <- getLine
+    existe <- doesFileExist fichero
+    if existe
+        then do
+            contenido <- readFile fichero
+            let lineas = [l | l<-lines contenido, length l > 0]
+            return lineas
+        else do
+            putStrLn "Error, este fichero no existe en el directorio actual."
+            cargarPartida
+
+-- Función para crear un guardado del juego.
+guardarPartida :: Cuadricula -> Int -> (Int,Int) -> FilePath -> IO ()
+guardarPartida c j (p1,p2) nombre = do
+    let estado = elems c
+    let jugador = show j
+    let puntuaciones = (show p1) ++ "\n" ++ (show p2)
+    let texto = estado ++ "\n"++ jugador ++ puntuaciones
+    writeFile nombre texto
+
+-- Funciones para iniciar o cargar el juego. A estas funciones son a las que acabará llamando el main.
+-- ------------------------------------------------------------------------
+iniciaJuego :: IO ()
+iniciaJuego = do
+    putStrLn "¿Quieres empezar un juego nuevo o cargar una partida?"
+    putStrLn "Escribe 'nuevo' o 'cargar' por favor"
+    respuesta <- getLine
+    trataR respuesta
+
+-- Función para tratar con la respuesta del usuario.
+trataR :: String -> IO ()
+trataR r
+    | r == "nuevo" = partidaNueva
+    | r == "cargar" = do
+        datos <- cargarPartida
+        let c = traduceCadena (datos !! 0) 8
+        let j = digitToInt $ head $ datos !! 1
+        let p1 = digitToInt $ head $ datos !! 2
+        let p2 = digitToInt $ head $ datos !! 3
+        if (finalizado c)
+        then if (p1)==(p2)
+            then putStrLn "Empate..."
+            else if (p1)>(p2)
+                then do
+                    representaCuadricula c
+                    putStrLn "¡El jugador 1 ha ganado!"
+                else do
+                    representaCuadricula c
+                    putStrLn "¡El jugador 2 ha ganado!"
+            else do
+                juegoMedio c j (p1,p2)
+    | otherwise = do
+        putStrLn "Entrada no válida. Inténtelo de nuevo"
+        respuesta <- getLine
+        trataR respuesta
+-- ------------------------------------------------------------------------

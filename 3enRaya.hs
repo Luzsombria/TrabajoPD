@@ -183,13 +183,20 @@ partidaNueva = do
 -- Función para cargar partida. Supondremos que los datos de los guardados son siempre correctos.
 cargarPartida :: IO String
 cargarPartida = do
-    putStrLn "Escriba el nombre del fichero que guarda la partida"
+    putStrLn "-Escriba el nombre del fichero que guarda la partida"
     fichero <- getLine
     existe <- doesFileExist fichero
-    contenido <- if existe then readFile fichero else error "Error, este fichero no existe en el directorio actual."
-    let lineas = [l | l<-lines contenido, length l > 0]
-    putStr (last lineas)
-    return (concat lineas)
+    if existe
+        then do
+            contenido <- readFile fichero
+            let lineas = [l | l<-lines contenido, length l > 0]
+            return (concat lineas)
+        else do
+            putStrLn "Error, este fichero no existe en el directorio actual."
+            contenido <- cargarPartida
+            let lineas = [l | l<-lines contenido, length l > 0]
+            return (concat lineas)
+    
 
 -- Función para crear un guardado del juego.
 guardarPartida :: Cuadricula -> Int -> FilePath -> IO ()
