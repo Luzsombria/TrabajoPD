@@ -19,8 +19,8 @@ main = iniciaJuego
 type Cuadricula = Matriz Char
 
 -- Necesitaremos una función que nos cree cuadrículas con los valores que necesitemos más adelante.
-creaCruadricula :: (Int,Int) -> [Char] -> Cuadricula
-creaCruadricula is vs = matrizNueva is vs
+creaCuadricula :: (Int,Int) -> [Char] -> Cuadricula
+creaCuadricula is vs = matrizNueva is vs
 
 -- Creamos la Cuadrícula vacía del tamaño escogido para comenzar un nuevo juego.
 inicial :: Int -> Cuadricula
@@ -43,7 +43,7 @@ llena c = (length es) == suma
 
 -- También vamos a necesitar puntuar todas las veces que se forme la palabra OSO en una Cuadrícula de 3x3.
 puntuaOSO :: Cuadricula -> Int
-puntuaOSO c = div (length es) 3
+puntuaOSO c = length es
     where fs = listaFilas c
           cs = listaColumnas c
           ds = diagonalesMatriz c
@@ -99,7 +99,7 @@ representaCuadricula :: Cuadricula -> IO()
 representaCuadricula c = do
     let fs = listaFilas c
     let cuadricula = escribeCuadricula fs
-    putStrLn cuadricula
+    putStrLn $ "\n" ++ cuadricula
 
 -- Función para cambiar de jugador 1 a jugador 2.
 siguiente :: Int -> Int
@@ -126,24 +126,42 @@ calculaPuntuacion c (i,j) v
     | v=='O' = calculaPuntuacionO c (i,j)
     | otherwise = calculaPuntuacionS c (i,j)
 
--- De los dos cálculos posibles, el de 'S' es más sencillo ya que sólo necesitamos observar una posible Cuadrícula de 3x3.
+-- De los dos cálculos posibles, el de 'S' es más corto. Ya que de las 8 posibles formas de puntuar sólo tenemos que mirar
+-- la mitad gracias a la naturaleza propia del juego.
 calculaPuntuacionS :: Cuadricula -> (Int,Int) -> Int
-calculaPuntuacionS c (i,j) = puntuaOSO acotada
+calculaPuntuacionS c (i,j) = sum [miraOS c (i,j) ind alrededor | ind<-alrededor]
     where lc = snd $ snd $ bounds c
-          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc]
-          nfilas = length $ nub [fst ind | ind<-alrededor]
-          nCols = length $ nub [snd ind | ind<-alrededor]
-          es = [c ! p | p<-alrededor]
-          acotada = creaCruadricula (nfilas,nCols) es
+          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc,m/=i,n/=j]
 
--- Con esta, vamos a aprovecharnos de la construida hace un momento para calcular la puntuación cuando se coloca una 'S'.
--- La idea es coger todas aquellas Cuadrículas de alrededor de nuestra 'O' y fijarnos si llevan 'S', en cuyo caso
--- sólo habría que calcular las puntuaciones de las 'S', por lo que volvemos a la función anterior.
+-- Esta será la función auxiliar que ayude a calcular los puntos con las 'S'.
+miraOS :: Cuadricula -> (Int,Int) -> (Int,Int) -> [(Int,Int)] -> Int
+miraOS c (i,j) (m,n) is
+    | (m<i) && (n<j) = if length (['O' | (x,y)<-is,x>i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m<i) && (n==j) = if length (['O' | (x,y)<-is,x>i,y==j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m<i) && (n>j) = if length (['O' | (x,y)<-is,x>i,y<j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m==i) && (n<j) = if length (['O' | (x,y)<-is,x==i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | otherwise = 0
+
+-- Con esta vamos a hacer lo mismo que la anterior pero teniendo en cuenta que estamos tratando con las 'O'
+-- no con las 'S'.
 calculaPuntuacionO :: Cuadricula -> (Int,Int) -> Int
-calculaPuntuacionO c (i,j) = sum [calculaPuntuacionS c ind | ind<-contienenS]
+calculaPuntuacionO c (i,j) = sum [miraOO c (i,j) ind | ind<-contienenS]
     where lc = snd $ snd $ bounds c
-          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc]
+          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>0,n>0,m<lc,n<lc,m/=i,n/=j]
           contienenS = [ind | ind<-alrededor,(c ! ind)=='S']
+
+-- Esta será la función auxiliar que ayude a calcular los puntos con las 'O'.
+miraOO :: Cuadricula -> (Int,Int) -> (Int,Int) -> Int
+miraOO c (i,j) (m,n)
+    | (m<i) && (n<j) = if (c ! (m-1,n-1))=='O' then 1 else 0
+    | (m<i) && (n==j) = if (c ! (m-1,n))=='O' then 1 else 0
+    | (m<i) && (n>j) = if (c ! (m-1,n+1))=='O' then 1 else 0
+    | (m==i) && (n<j) = if (c ! (m,n-1))=='O' then 1 else 0
+    | (m==i) && (n>j) = if (c ! (m,n+1))=='O' then 1 else 0
+    | (m>i) && (n<j) = if (c ! (m+1,n-1))=='O' then 1 else 0
+    | (m>i) && (n==j) = if (c ! (m+1,n))=='O' then 1 else 0
+    | (m>i) && (n>j) = if (c ! (m+1,n+1))=='O' then 1 else 0
+    | otherwise = 0
 
 -- ------------------------------------------------------------------------
 -- Función para continuar una partida. Recibe la Cuadrícula estado del juego y el jugador que tiene turno.

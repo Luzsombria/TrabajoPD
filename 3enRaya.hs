@@ -113,7 +113,7 @@ representaCuadricula :: Cuadricula -> IO()
 representaCuadricula c = do
     let fs = listaFilas c
     let cuadricula = escribeCuadricula fs
-    putStrLn cuadricula
+    putStrLn $ "\n" ++ cuadricula
 
 -- Función para continuar una partida. Recibe la cuadrícula estado del juego y el jugador que tiene turno.
 juegoMedio :: Cuadricula -> Int -> IO()

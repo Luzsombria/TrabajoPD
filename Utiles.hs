@@ -40,8 +40,8 @@ matrizUnitaria n v = array ((0,0),(n-1,n-1)) [((i,j),v) | i<-[0..n-1],j<-[0..n-1
 
 -- Función para crear una nueva Matriz con los valores y los índices límites indicados.
 matrizNueva :: (Int,Int) -> [a] -> Matriz a
-matrizNueva (i,j) vs = array ((0,0),(i,j)) [(ind,v) | (ind,v)<-zip is vs]
-    where is = [(m,n) | m<-[0..i],n<-[0..j]]
+matrizNueva (i,j) vs = array ((0,0),(i-1,j-1)) [(ind,v) | (ind,v)<-zip is vs]
+    where is = [(m,n) | m<-[0..i-1],n<-[0..j-1]]
 
 -- Función para crear una Matriz a partir de una lista de listas.
 listaMatriz :: [[a]] -> Matriz a
