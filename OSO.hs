@@ -146,14 +146,18 @@ miraOS c (i,j) (m,n) is
 -- Con esta vamos a hacer lo mismo que la anterior pero teniendo en cuenta que estamos tratando con las 'O'
 -- no con las 'S'.
 calculaPuntuacionO :: Cuadricula -> (Int,Int) -> Int
-calculaPuntuacionO c (i,j) = sum [miraOO c (i,j) (m,n) | (m,n)<-contienenS,m-1>=0,n-1>=0,m+1<=lc,n+1<=lc]
+calculaPuntuacionO c (i,j) = sum [miraOO c (i,j) (m,n) lc | (m,n)<-contienenS]
     where lc = snd $ snd $ bounds c
           alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc,(m,n)/=(i,j)]
           contienenS = [ind | ind<-alrededor,(c ! ind)=='S']
 
 -- Esta será la función auxiliar que ayude a calcular los puntos con las 'O'.
-miraOO :: Cuadricula -> (Int,Int) -> (Int,Int) -> Int
-miraOO c (i,j) (m,n)
+miraOO :: Cuadricula -> (Int,Int) -> (Int,Int) -> Int -> Int
+miraOO c (i,j) (m,n) lc
+    | m-1<0 = compruebaLSu c (i,j) (m,n)
+    | n-1<0 = compruebaLIz c (i,j) (m,n)
+    | m+1>lc = compruebaLIn c (i,j) (m,n)
+    | n+1>lc = compruebaLDe c (i,j) (m,n)
     | (m<i) && (n<j) = if (c ! (m-1,n-1))=='O' then 1 else 0
     | (m<i) && (n==j) = if (c ! (m-1,n))=='O' then 1 else 0
     | (m<i) && (n>j) = if (c ! (m-1,n+1))=='O' then 1 else 0
@@ -163,6 +167,45 @@ miraOO c (i,j) (m,n)
     | (m>i) && (n==j) = if (c ! (m+1,n))=='O' then 1 else 0
     | (m>i) && (n>j) = if (c ! (m+1,n+1))=='O' then 1 else 0
     | otherwise = 0
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+compruebaLSu :: Cuadricula -> (Int,Int) -> (Int,Int) -> Int
+compruebaLSu c (i,j) (m,n)
+    | (m==i) && (n<j) = if (c ! (m,n-1))=='O' then 1 else 0
+    | (m==i) && (n>j) = if (c ! (m,n+1))=='O' then 1 else 0
+    | (m>i) && (n<j) = if (c ! (m+1,n-1))=='O' then 1 else 0
+    | (m>i) && (n==j) = if (c ! (m+1,n))=='O' then 1 else 0
+    | (m>i) && (n>j) = if (c ! (m+1,n+1))=='O' then 1 else 0
+    | otherwise = 0
+
+compruebaLIz :: Cuadricula -> (Int,Int) -> (Int,Int) -> Int
+compruebaLIz c (i,j) (m,n)
+    | (m<i) && (n==j) = if (c ! (m-1,n))=='O' then 1 else 0
+    | (m<i) && (n>j) = if (c ! (m-1,n+1))=='O' then 1 else 0
+    | (m==i) && (n>j) = if (c ! (m,n+1))=='O' then 1 else 0
+    | (m>i) && (n==j) = if (c ! (m+1,n))=='O' then 1 else 0
+    | (m>i) && (n>j) = if (c ! (m+1,n+1))=='O' then 1 else 0
+    | otherwise = 0
+
+compruebaLIn :: Cuadricula -> (Int,Int) -> (Int,Int) -> Int
+compruebaLIn c (i,j) (m,n)
+    | (m<i) && (n<j) = if (c ! (m-1,n-1))=='O' then 1 else 0
+    | (m<i) && (n==j) = if (c ! (m-1,n))=='O' then 1 else 0
+    | (m<i) && (n>j) = if (c ! (m-1,n+1))=='O' then 1 else 0
+    | (m==i) && (n<j) = if (c ! (m,n-1))=='O' then 1 else 0
+    | (m==i) && (n>j) = if (c ! (m,n+1))=='O' then 1 else 0
+    | otherwise = 0
+
+compruebaLDe :: Cuadricula -> (Int,Int) -> (Int,Int) -> Int
+compruebaLDe c (i,j) (m,n)
+    | (m<i) && (n<j) = if (c ! (m-1,n-1))=='O' then 1 else 0
+    | (m<i) && (n==j) = if (c ! (m-1,n))=='O' then 1 else 0
+    | (m==i) && (n<j) = if (c ! (m,n-1))=='O' then 1 else 0
+    | (m>i) && (n<j) = if (c ! (m+1,n-1))=='O' then 1 else 0
+    | (m>i) && (n==j) = if (c ! (m+1,n))=='O' then 1 else 0
+    | otherwise = 0
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 -- ------------------------------------------------------------------------
 -- Función para continuar una partida. Recibe la Cuadrícula estado del juego y el jugador que tiene turno.
