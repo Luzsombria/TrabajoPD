@@ -355,3 +355,40 @@ ponAleatorio :: Cuadricula -> Cuadricula
 ponAleatorio c = actualizaValor pos maquina c
     where validos = [x | x<-listaAleatoria, valido x c]
           pos = head validos
+-- ------------------------------------------------------------------------
+
+data Arbol a = N a [Arbol a]
+
+-- Función de generación de arbol
+generaArbol :: Cuadricula -> Arbol Cuadricula
+generaArbol c | llena c = (N c [])
+              | otherwise = (N c (map generaArbol (posiblesJugadas c)))
+
+-- Función de jugadas futuras
+posiblesJugadas :: Cuadricula -> [Cuadricula]
+posiblesJugadas c | victoriaM c = []
+                  | otherwise = (ponAleatorio c):posiblesJugadas c
+
+-- Función para comprobar si la maquina ha ganado
+victoriaM :: Cuadricula -> Bool
+victoriaM c = or [if x==3 then True else False | x<-lss]
+  where fs = listaFilas c
+        cs = listaColumnas c
+        ds = diagonalesMatriz c
+        fso = [x | x<-fs,x=="OOO"]
+        cso = [x | x<-cs,x=="OOO"]
+        dso = [x | x<-ds,x=="OOO"]
+        ess = fso++cso++dso
+        lss = [length x | x <- ess]
+
+-- Función para calcular la profundidad de cada rama
+profundidad :: Arbol Int -> [Int]
+profundidad (N _ []) = [0]
+profundidad (N _ [(N x [])]) = [1]
+profundidad (N _ xs) = [1 + sum (profundidad x) | x <- xs]
+
+profundidadG :: Arbol a -> Int
+profundidadG (N _ as)
+      | null as = 0
+      | otherwise = 1 + calc
+            where calc = minimum (map profundidadG as)
