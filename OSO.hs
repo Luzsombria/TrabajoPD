@@ -131,26 +131,24 @@ calculaPuntuacion c (i,j) v
 calculaPuntuacionS :: Cuadricula -> (Int,Int) -> Int
 calculaPuntuacionS c (i,j) = sum [miraOS c (i,j) ind alrededor | ind<-contienenO]
     where lc = snd $ snd $ bounds c
-          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc,m/=i,n/=j]
+          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc,(m,n)/=(i,j)]
           contienenO = [ind | ind<-alrededor,(c ! ind)=='O']
 
 -- Esta será la función auxiliar que ayude a calcular los puntos con las 'S'.
 miraOS :: Cuadricula -> (Int,Int) -> (Int,Int) -> [(Int,Int)] -> Int
 miraOS c (i,j) (m,n) is
-    | (m<i) && (n<j) = if sum ([1 | (x,y)<-is,x>i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
-    | (m<i) && (n==j) = if sum ([1 | (x,y)<-is,x>i,y==j,(c ! (x,y))=='O'])>0 then 1 else 0
-    | (m>i) && (n==j) = if sum ([1 | (x,y)<-is,x<i,y==j,(c ! (x,y))=='O'])>0 then 1 else 0
-    | (m<i) && (n>j) = if sum ([1 | (x,y)<-is,x>i,y<j,(c ! (x,y))=='O'])>0 then 1 else 0
-    | (m==i) && (n<j) = if sum ([1 | (x,y)<-is,x==i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
-    | (m==i) && (n>j) = if sum ([1 | (x,y)<-is,x==i,y<j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m<i) && (n<j) = if length ([1 | (x,y)<-is,x>i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m<i) && (n==j) = if length ([1 | (x,y)<-is,x>i,y==j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m<i) && (n>j) = if length ([1 | (x,y)<-is,x>i,y<j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m==i) && (n<j) = if length ([1 | (x,y)<-is,x==i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
     | otherwise = 0
 
 -- Con esta vamos a hacer lo mismo que la anterior pero teniendo en cuenta que estamos tratando con las 'O'
 -- no con las 'S'.
 calculaPuntuacionO :: Cuadricula -> (Int,Int) -> Int
-calculaPuntuacionO c (i,j) = sum [miraOO c (i,j) ind | ind<-contienenS]
+calculaPuntuacionO c (i,j) = sum [miraOO c (i,j) (m,n) | (m,n)<-contienenS,m-1>=0,n-1>=0,m+1<=lc,n+1<=lc]
     where lc = snd $ snd $ bounds c
-          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>0,n>0,m<lc,n<lc,m/=i,n/=j]
+          alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc,(m,n)/=(i,j)]
           contienenS = [ind | ind<-alrededor,(c ! ind)=='S']
 
 -- Esta será la función auxiliar que ayude a calcular los puntos con las 'O'.
