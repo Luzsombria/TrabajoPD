@@ -129,17 +129,20 @@ calculaPuntuacion c (i,j) v
 -- De los dos cálculos posibles, el de 'S' es más corto. Ya que de las 8 posibles formas de puntuar sólo tenemos que mirar
 -- la mitad gracias a la naturaleza propia del juego.
 calculaPuntuacionS :: Cuadricula -> (Int,Int) -> Int
-calculaPuntuacionS c (i,j) = sum [miraOS c (i,j) ind alrededor | ind<-alrededor]
+calculaPuntuacionS c (i,j) = sum [miraOS c (i,j) ind alrededor | ind<-contienenO]
     where lc = snd $ snd $ bounds c
           alrededor = [(m,n) | m<-[i-1..i+1],n<-[j-1..j+1], m>=0,n>=0,m<=lc,n<=lc,m/=i,n/=j]
+          contienenO = [ind | ind<-alrededor,(c ! ind)=='O']
 
 -- Esta será la función auxiliar que ayude a calcular los puntos con las 'S'.
 miraOS :: Cuadricula -> (Int,Int) -> (Int,Int) -> [(Int,Int)] -> Int
 miraOS c (i,j) (m,n) is
-    | (m<i) && (n<j) = if length (['O' | (x,y)<-is,x>i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
-    | (m<i) && (n==j) = if length (['O' | (x,y)<-is,x>i,y==j,(c ! (x,y))=='O'])>0 then 1 else 0
-    | (m<i) && (n>j) = if length (['O' | (x,y)<-is,x>i,y<j,(c ! (x,y))=='O'])>0 then 1 else 0
-    | (m==i) && (n<j) = if length (['O' | (x,y)<-is,x==i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m<i) && (n<j) = if sum ([1 | (x,y)<-is,x>i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m<i) && (n==j) = if sum ([1 | (x,y)<-is,x>i,y==j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m>i) && (n==j) = if sum ([1 | (x,y)<-is,x<i,y==j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m<i) && (n>j) = if sum ([1 | (x,y)<-is,x>i,y<j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m==i) && (n<j) = if sum ([1 | (x,y)<-is,x==i,y>j,(c ! (x,y))=='O'])>0 then 1 else 0
+    | (m==i) && (n>j) = if sum ([1 | (x,y)<-is,x==i,y<j,(c ! (x,y))=='O'])>0 then 1 else 0
     | otherwise = 0
 
 -- Con esta vamos a hacer lo mismo que la anterior pero teniendo en cuenta que estamos tratando con las 'O'
@@ -184,10 +187,10 @@ juegoMedio c j puntuaciones = do
     let calculo = calculaPuntuacion cn (fil,col) v
     if j == 1
         then do
-            let nuevasP = (calculo, snd puntuaciones)
+            let nuevasP = ((fst puntuaciones) + calculo, snd puntuaciones)
             gestionaTurno cn j nuevasP
         else do
-            let nuevasP = (fst puntuaciones, calculo)
+            let nuevasP = (fst puntuaciones, (snd puntuaciones) + calculo)
             gestionaTurno cn j nuevasP
 
 -- Función para manejar lo que le ocurre al juego entre turno y turno. Esta función se usará también para
@@ -209,6 +212,7 @@ gestionaTurno c j puntuaciones = do
             representaCuadricula c
             putStrLn "¿Desea guardar partida?"
             putStrLn "Si desea guardar partida escriba <<SI>> por favor"
+            seguridad <- getLine
             deseo <- getLine
             if deseo == "SI"
                 then do
@@ -248,7 +252,7 @@ guardarPartida c j (p1,p2) nombre = do
     let estado = elems c
     let jugador = show j
     let puntuaciones = (show p1) ++ "\n" ++ (show p2)
-    let texto = estado ++ "\n"++ jugador ++ puntuaciones
+    let texto = estado ++ "\n"++ jugador ++ "\n" ++ puntuaciones
     writeFile nombre texto
 
 -- Funciones para iniciar o cargar el juego. A estas funciones son a las que acabará llamando el main.
