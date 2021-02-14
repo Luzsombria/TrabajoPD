@@ -12,13 +12,19 @@ import System.IO
 -- Inicializamos las variables que necesitaremos para este juego.
 cj1 = 'X'
 cj2 = 'O'
+jugadorVsM = 'X'
+maquina = 'O'
 numeroDeFilas = 3
 listaAleatoria = [(0,2),(2,2),(0,1),(1,2),(0,0),(1,1),(1,0),(2,1),(2,0)]
 
 
 -- Función main
 main :: IO()
-main = iniciaJuego
+main = do
+    modo <- leeDigito "Escoge. Modo 1 jugador o 2 jugadores. Para escoger simplemente pon el número"
+    if modo == 1
+        then iniciaJuego2
+        else iniciaJuego --Nótese la ironía en sus respectivos nombres.
 
 -- También definimos el tipo Cuadricula que va a ser la referencia para el correcto desarrollo del juego. El tipo 'a' de la
 -- Matriz lo vamos a sustituir por Char ya que vamos a usar 'X' y 'O' para representar los círculos y cruces del juego.
@@ -134,16 +140,47 @@ juegoMedio c j = do
     cn <- jugada c (fil,col) v
     gestionaTurno cn j
 
+-- Función para continuar una partida con la máquina.
+juegoMedio2 :: Cuadricula -> Int -> Int -> IO()
+juegoMedio2 c j dif = do
+    putStrLn "Estado del juego:\n"
+    representaCuadricula c
+    let rangosC = bounds c
+    let par1 = fst rangosC
+    let par2 = snd rangosC
+    let menor = fst par1
+    let mayor = snd par2
+    if j == 1
+        then do
+            putStrLn "-Le toca al jugador"
+            putStr "-Para escoger casilla recuerda que los números que puedes escoger oscilan entre "
+            putStrLn $ (show menor) ++ " y " ++ (show mayor) ++ "."
+            (fil,col) <- revisaIn (menor,mayor)
+            cn <- jugada c (fil,col) jugadorVsM
+            gestionaTurno2 cn j dif
+        else do
+            putStrLn "-Le toca a la máquina"
+            if dif == 1
+                then do
+                    let cn = ponAleatorio c
+                    gestionaTurno2 cn j dif
+                else do
+                    let cn = ponNoAleatorio -- Sustituye aquí para el aprendizaje automático Rafa
+                    gestionaTurno2 cn j dif
+
+ponNoAleatorio :: Cuadricula
+ponNoAleatorio = undefined
+
 -- Función para manejar lo que le ocurre al juego entre turno y turno. Esta función se usará también para
 -- gestionar el comienzo de un juego nuevo en el main.
 gestionaTurno :: Cuadricula -> Int -> IO()
 gestionaTurno c j = do
     if (finalizado c)
-        then if (llena c)
-            then putStrLn "Empate..."
-            else do
+        then if (hay3EnRaya c)
+            then do
                 representaCuadricula c
                 putStrLn $ "¡El jugador "++(show j)++" ha ganado!"
+            else putStrLn "Empate..."
         else do
             let jn = siguiente j
             representaCuadricula c
@@ -163,6 +200,36 @@ gestionaTurno c j = do
                         else return ()
                 else juegoMedio c jn
 
+-- Función para manejar lo que le ocurre al juego entre turno y turno contra la máquina.
+gestionaTurno2 :: Cuadricula -> Int -> Int -> IO()
+gestionaTurno2 c j dif = do
+    if (finalizado c)
+        then if (hay3EnRaya c)
+            then do
+                representaCuadricula c
+                if j == 1
+                    then putStrLn "¡El jugador ha ganado!"
+                    else putStrLn "La máquina gana..."
+            else putStrLn "Empate..."
+        else do
+            let jn = siguiente j
+            representaCuadricula c
+            putStrLn "¿Desea guardar partida?"
+            putStrLn "Si desea guardar partida escriba <<SI>> por favor"
+            deseo <- getLine
+            if deseo == "SI"
+                then do
+                    putStrLn "En ese caso escriba un nombre para el archivo de guardado"
+                    nombre <- getLine
+                    guardarPartida c jn nombre
+                    putStrLn "¿Desea seguir jugando?"
+                    putStrLn "Si desea seguir jugando escriba <<SI>> por favor. En caso contrario se entenderá como que no."
+                    deseo2 <- getLine
+                    if deseo2=="SI"
+                        then juegoMedio2 c jn dif
+                        else return ()
+                else juegoMedio2 c jn dif
+
 -- Función para generar una partida nueva.
 partidaNueva :: IO ()
 partidaNueva = do
@@ -180,6 +247,13 @@ partidaNueva = do
         else do
             putStrLn "Carácter inválido. Vuelva a intentarlo."
             partidaNueva
+
+-- Función para generar una partida nueva con una máquina.
+partidaNueva2 :: IO ()
+partidaNueva2 = do
+    dif <- leeDigito "Primero escoja una dificultad. Puede escoger entre simple(1) o complejo(2)."
+    j <- leeDigito "Ahora escoja si quiere empezar usted o la máquina por favor."
+    juegoMedio2 inicial j dif
 
 -- Función para cargar partida. Supondremos que los datos de los guardados son siempre correctos.
 cargarPartida :: IO String
@@ -207,7 +281,7 @@ guardarPartida c j nombre = do
     let texto = estado++"\n"++jugador
     writeFile nombre texto
 
--- Funciones para iniciar o cargar el juego. A estas funciones son a las que acabará llamando el main.
+-- Funciones para iniciar o cargar el juego para humanos.
 -- ------------------------------------------------------------------------
 iniciaJuego :: IO ()
 iniciaJuego = do
@@ -238,3 +312,46 @@ trataR r
         respuesta <- getLine
         trataR respuesta
 -- ------------------------------------------------------------------------
+
+-- Funciones para iniciar o cargar el juego para un jugador.
+-- ------------------------------------------------------------------------
+iniciaJuego2 :: IO ()
+iniciaJuego2 = do
+    putStrLn "¿Quieres empezar un juego nuevo o cargar una partida?"
+    putStrLn "Escribe 'nuevo' o 'cargar' por favor"
+    respuesta <- getLine
+    trataR2 respuesta
+
+-- Función para tratar con la respuesta del usuario.
+trataR2 :: String -> IO ()
+trataR2 r
+    | r == "nuevo" = partidaNueva2
+    | r == "cargar" = do
+        datos <- cargarPartida
+        let c = traduceCadena (init datos) 3
+        let j = digitToInt (last datos)
+        if (finalizado c)
+            then if (llena c)
+                then putStrLn "Empate..."
+                else do
+                    representaCuadricula c
+                    let jn = siguiente j
+                    if jn == 1
+                        then do
+                            putStrLn $ "¡El jugador ha ganado!"
+                        else do
+                            putStrLn "La máquina ha ganado..." 
+            else do
+                dif <- leeDigito "Escoja la dificultad con la que quiere reanudar la partida por favor"
+                juegoMedio2 c j dif
+    | otherwise = do
+        putStrLn "Entrada no válida. Inténtelo de nuevo"
+        respuesta <- getLine
+        trataR2 respuesta
+-- ------------------------------------------------------------------------
+
+-- Función para el nivel más simple de la máquina.
+ponAleatorio :: Cuadricula -> Cuadricula
+ponAleatorio c = actualizaValor pos maquina c
+    where validos = [x | x<-listaAleatoria, valido x c]
+          pos = head validos
