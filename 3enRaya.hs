@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 -- Este archivo contiene el main final del juego interactivo 3 en raya
 
 -- Módulos importados
@@ -395,4 +394,3 @@ profundidadG (N _ as)
       | null as = 0
       | otherwise = 1 + calc
             where calc = minimum (map profundidadG as)
->>>>>>> a468b2e38314b6004b683db9b64e85d136c34ccb
