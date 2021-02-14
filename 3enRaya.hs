@@ -21,7 +21,7 @@ listaAleatoria = [(0,2),(2,2),(0,1),(1,2),(0,0),(1,1),(1,0),(2,1),(2,0)]
 -- Función main
 main :: IO()
 main = do
-    modo <- leeDigito "Escoge. Modo 1 jugador o 2 jugadores. Para escoger simplemente pon el número"
+    modo <- leeDigito "Escoge. Modo 1 jugador o 2 jugadores. Para escoger simplemente pon el número (1 ó 2)"
     if modo == 1
         then iniciaJuego2
         else iniciaJuego --Nótese la ironía en sus respectivos nombres.

@@ -12,7 +12,8 @@ module Utiles
      actualizaValor,
      valido,
      escribeCuadricula,
-     traduceCadena
+     traduceCadena,
+     generaAleatorios
     ) where
 -- ------------------------------------------------------------------------
 
