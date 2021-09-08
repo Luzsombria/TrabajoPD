@@ -99,8 +99,8 @@ diagonalesMatriz p = (diagonalPMatriz n p):[diagonalSMatriz n p]
     where n = numFilas p
 
 -- Función para cambiar el valor de una posición de la Matriz entrante.
-actualizaValor :: (Int, Int) -> a -> Matriz a -> Matriz a
-actualizaValor (i,j) v p = listaMatriz ass
+actualizaValor :: a -> Matriz a -> (Int, Int) -> Matriz a
+actualizaValor v p (i,j) = listaMatriz ass
     where xss = listaFilas p
           xs = xss !! i
           as = [if ind == j then v else x | (x,ind)<-zip xs [0..]]
