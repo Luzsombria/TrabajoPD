@@ -1,5 +1,3 @@
--- Este archivo contiene el main final del juego interactivo 3 en raya
-
 -- Módulos importados
 -- ------------------------------------------------------------------------
 import Utiles
@@ -17,11 +15,14 @@ maquina = 'O'
 numeroDeFilas = 3
 listaAleatoria = [(0,2),(2,2),(0,1),(1,2),(0,0),(1,1),(1,0),(2,1),(2,0)]
 
+prueba :: Cuadricula
+prueba = array ((0,0),(2,2)) [((0,0),'X'),((0,1),'O'),((0,2),'X'),((1,0),' '),((1,1),'O'),((1,2),' '),((2,0),'O'),((2,1),' '),((2,2),'X')]
+
 
 -- Función main
 main :: IO()
 main = do
-    modo <- leeDigito "Escoge. Modo 1 jugador o 2 jugadores. Para escoger simplemente pon el número (1 ó 2)"
+    modo <- leeDigito "Escoja. Modo 1 jugador o 2 jugadores. Para escoger simplemente ponga el número (1 ó 2): "
     if modo == 1
         then iniciaJuego2
         else iniciaJuego --Nótese la ironía en sus respectivos nombres.
@@ -100,7 +101,7 @@ revisaIn (i,j) = do
 jugada :: Cuadricula -> (Int,Int) -> Char -> IO Cuadricula
 jugada c (i,j) v
     | valido (i,j) c = do
-        let cn = actualizaValor (i,j) v c
+        let cn = actualizaValor v c (i,j)
         return cn
     | otherwise = do
         putStrLn "Jugada no válida, vuelva a intentarlo."
@@ -165,11 +166,77 @@ juegoMedio2 c j dif = do
                     let cn = ponAleatorio c
                     gestionaTurno2 cn j dif
                 else do
-                    let cn = ponNoAleatorio -- Sustituye aquí para el aprendizaje automático Rafa
+                    let cn = ponNoAleatorio c
                     gestionaTurno2 cn j dif
+					
 
-ponNoAleatorio :: Cuadricula
-ponNoAleatorio = undefined
+-- ********************************************************************************
+-- Funciones necesarias para que la máquina funcione con aprendizaje automático
+
+-- Valor por defecto para la poda
+profBus :: Int
+profBus = 6
+
+-- Función para determinar las casillas libres
+libres :: Cuadricula -> [(Int, Int)]
+libres c = [p | p <- lista, valido p c]
+	where lista = [(x,y) | x<-[0..2], y<-[0..2]]
+
+-- Función de creacion de arbol
+creaArbol :: Cuadricula -> Arbol Cuadricula
+creaArbol c = creaArbol' c 0
+creaArbol' c ac
+            | llena c = (N c [])
+            | otherwise = (N c as)
+             where s = movimientos c ac
+                   as = [creaArbol' a (ac+1) | a<-s]
+
+-- Función de jugadas futuras segun su disponibilidad
+movimientos :: Cuadricula -> Int -> [Cuadricula]
+movimientos c pr
+              | hay3EnRaya c = []
+              | even pr = map (actualizaValor maquina c) (libres c)
+              | otherwise = map (actualizaValor jugadorVsM c) (libres c)
+
+-- Definimos tipo Puntuación para valorar las cuadrículas
+type Puntuacion = Int
+
+-- Función para puntuar las cuadrículas dentro del arbol de decisiones
+puntuaciones :: [Arbol (Puntuacion,Cuadricula)] -> [Puntuacion]
+puntuaciones arboles = [p | N (p,_) _ <- arboles]
+
+-- Función para el nivel avanzado de la máquina
+ponNoAleatorio :: Cuadricula -> Cuadricula
+ponNoAleatorio c = mejorMov c
+
+-- Funciones propias del algoritmo minimax con poda
+
+-- Función para determinar el mejor movimiento posible para ganar.
+mejorMov :: Cuadricula -> Cuadricula
+mejorMov = seleccion . maximiza . poda profBus . creaArbol
+
+-- Función que selecciona la cuadrícula que tenga asignada la puntuación mas favorable
+seleccion :: Arbol (Puntuacion, Cuadricula) -> Cuadricula
+seleccion (N (p,_) cs) = head [c | N (puntos, c) _ <- cs, puntos == p]
+
+-- Función que actualiza el valor de una cuadrícula a mejor si resulta en un movimiento favorable
+maximiza :: Arbol Cuadricula -> Arbol (Puntuacion, Cuadricula)
+maximiza (N c []) | hay3EnRaya c = N (-1,c) [] 
+				  | otherwise = N (0,c) []
+maximiza (N c cs) = N (maximum (puntuaciones ps),c) ps
+	where ps = map minimiza cs
+
+-- Función que actualiza el valor de una cuadrícula a peor si resulta en un movimiento no favorable
+minimiza :: Arbol Cuadricula -> Arbol (Puntuacion, Cuadricula)
+minimiza (N c []) | hay3EnRaya c = N (1,c) [] 
+				  | otherwise = N (0,c) []
+minimiza (N c cs) = N (minimum (puntuaciones ps),c) ps
+	where ps = map maximiza cs
+
+-- Función que elimina caminos posibles en el arbol de decisiones según la profundidad de busqueda
+poda :: Int -> Arbol a -> Arbol a
+poda prof (N a as) | prof == 0 = N a [] | otherwise = N a (map (poda (prof-1)) as)
+
 
 -- Función para manejar lo que le ocurre al juego entre turno y turno. Esta función se usará también para
 -- gestionar el comienzo de un juego nuevo en el main.
@@ -251,8 +318,8 @@ partidaNueva = do
 -- Función para generar una partida nueva con una máquina.
 partidaNueva2 :: IO ()
 partidaNueva2 = do
-    dif <- leeDigito "Primero escoja una dificultad. Puede escoger entre simple(1) o complejo(2)."
-    j <- leeDigito "Ahora escoja si quiere empezar usted o la máquina por favor."
+    dif <- leeDigito "Primero escoja una dificultad. Puede escoger entre simple(1) o complejo(2): "
+    j <- leeDigito "Ahora escoja si quiere empezar usted(1) o la máquina(2) por favor: "
     juegoMedio2 inicial j dif
 
 -- Función para cargar partida. Supondremos que los datos de los guardados son siempre correctos.
@@ -352,7 +419,7 @@ trataR2 r
 
 -- Función para el nivel más simple de la máquina.
 ponAleatorio :: Cuadricula -> Cuadricula
-ponAleatorio c = actualizaValor pos maquina c
+ponAleatorio c = actualizaValor maquina c pos
     where validos = [x | x<-listaAleatoria, valido x c]
           pos = head validos
 
@@ -360,6 +427,12 @@ ponAleatorio c = actualizaValor pos maquina c
 -- ------------------------------------------------------------------------
 
 data Arbol a = N a [Arbol a]
+
+muestraArbol (N x xs) = 
+    show x ++ '\n' : (unlines . map ("  "++) . concatMap (lines . show)) xs
+ 
+instance Show a => Show (Arbol a) where
+  show = muestraArbol
 
 -- Función de generación de arbol
 generaArbol :: Cuadricula -> Arbol Cuadricula
@@ -384,13 +457,21 @@ victoriaM c = or [if x==3 then True else False | x<-lss]
         lss = [length x | x <- ess]
 
 -- Función para calcular la profundidad de cada rama
-profundidad :: Arbol Int -> [Int]
+profundidad :: Arbol a -> [Int]
 profundidad (N _ []) = [0]
 profundidad (N _ [(N x [])]) = [1]
 profundidad (N _ xs) = [1 + sum (profundidad x) | x <- xs]
 
-profundidadG :: Arbol a -> Int
-profundidadG (N _ as)
+-- Función para saber el número de jugadas óptimas para algún jugador
+profundidadMin :: Arbol a -> Int
+profundidadMin (N _ as)
       | null as = 0
       | otherwise = 1 + calc
-            where calc = minimum (map profundidadG as)
+            where calc = minimum (map profundidadMin as)
+
+-- Función para saber el número de jugadas menos óptimas para algún jugador
+profundidadMax :: Arbol a -> Int
+profundidadMax (N _ as)
+      | null as = 0
+      | otherwise = 1 + calc
+            where calc = maximum (map profundidadMax as)
