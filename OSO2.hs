@@ -14,7 +14,7 @@ listaAleatoria = [(4,4),(2,1),(0,0),(2,5),(0,2),(2,7),(0,3),(3,0),(0,5),(1,0),(6
 -- Función main
 main :: IO()
 main = do
-    modo <- leeDigito "Escoge. Modo 1 jugador o 2 jugadores. Para escoger simplemente pon el número (1 ó 2)"
+    modo <- leeDigito "Escoja. Modo 1 jugador o 2 jugadores. Para escoger simplemente ponga el número (1 ó 2): "
     if modo == 1
         then iniciaJuego2
         else iniciaJuego
@@ -401,7 +401,7 @@ iniciaJuego2 = do
 -- Función para tratar con la respuesta del usuario.
 trataR2 :: String -> IO ()
 trataR2 r
-    | r == "nuevo" = partidaNueva
+    | r == "nuevo" = partidaNueva2
     | r == "cargar" = do
         datos <- cargarPartida
         let c = traduceCadena (datos !! 0) 8
@@ -419,12 +419,18 @@ trataR2 r
                     representaCuadricula c
                     putStrLn "La máquina ha ganado..."
             else do
-                dif <- leeDigito "Escoja la dificultad con la que quiere reanudar la partida por favor"
+                dif <- leeDigito "Escoja la dificultad con la que quiere reanudar la partida por favor. Simple(1) o Complejo(2): "
                 juegoMedio2 c j (p1,p2) dif
     | otherwise = do
         putStrLn "Entrada no válida. Inténtelo de nuevo"
         respuesta <- getLine
         trataR2 respuesta
+
+-- Función para generar una partida nueva para 1 jugador.
+partidaNueva2 :: IO ()
+partidaNueva2 = do
+    dif <- leeDigito "Escoja dificultad por favor. Simple(1) o Complejo(2): "
+    juegoMedio2 (inicial 8) 1 (0,0) dif
 -- ------------------------------------------------------------------------
 
 -- Función para dar pie a la dificultad ya elegida para la máquina.
@@ -507,14 +513,14 @@ seleccion (N (p,_,_,_) cs) = head [(c,pos,letra) | N (puntos, c, pos, letra) _ <
 
 -- Función que actualiza el valor de una cuadrícula a mejor si resulta en un movimiento favorable
 maximiza :: Arbol (Cuadricula,(Int,Int),(Int,Int),Char) -> Arbol (Puntuacion, Cuadricula,(Int,Int),Char)
-maximiza (N (c,puntAct,pos,letra) []) | finalizado c || (fst puntAct) < (snd puntAct) = N (-1,c,pos,letra) [] 
+maximiza (N (c,puntAct,pos,letra) []) | finalizado c || (fst puntAct) > (snd puntAct) = N (-1,c,pos,letra) [] 
 						  | otherwise = N (0,c,pos,letra) []
 maximiza (N (c,puntAct,pos,letra) cs) = N (maximum (puntuaciones ps),c,pos,letra) ps
 	where ps = map minimiza cs
 
 -- Función que actualiza el valor de una cuadrícula a peor si resulta en un movimiento no favorable
 minimiza :: Arbol (Cuadricula,(Int,Int),(Int,Int),Char) -> Arbol (Puntuacion, Cuadricula,(Int,Int),Char)
-minimiza (N (c,puntAct,pos,letra) []) | finalizado c || (fst puntAct) < (snd puntAct) = N (1,c,pos,letra) [] 
+minimiza (N (c,puntAct,pos,letra) []) | finalizado c || (fst puntAct) > (snd puntAct) = N (1,c,pos,letra) [] 
 						  | otherwise = N (0,c,pos,letra) []
 minimiza (N (c,puntAct,pos,letra) cs) = N (minimum (puntuaciones ps),c,pos,letra) ps
 	where ps = map maximiza cs
