@@ -12,8 +12,6 @@ Este sistema de dificultad implementará tres dificultades iniciales:
 
 - **Facil**: Siendo este el modo sin entrenamiento de la maquina y solo conociendo las reglas del juego.
     
-- **Normal**: Un estado de la maquina en el que ya haya tenido conocimiento y aprendizaje del transcurso del juego y sea capaz de ganarnos alguna partida inicial.
-    
 - **Dificil**: Una maquina ya entrenada con conocimiento suficiente del juego para obligarnos a mejorar nuestras estrategias si queremos vencerla.
 
 El programa incluira una interfaz externa con una interfaz agradable y cómoda para el usuario, en la cual podrá empezar una partida nueva, continuar la última partida guardada, cargar partidas guardadas, acceder a unos ajustes de la aplicación y finalmente una opción para salir de la aplicación.
