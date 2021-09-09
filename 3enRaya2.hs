@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 -- Este archivo contiene el main final del juego interactivo 3 en raya
 
 -- Módulos importados
