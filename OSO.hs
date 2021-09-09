@@ -513,14 +513,14 @@ seleccion (N (p,_,_,_) cs) = head [(c,pos,letra) | N (puntos, c, pos, letra) _ <
 
 -- Función que actualiza el valor de una cuadrícula a mejor si resulta en un movimiento favorable
 maximiza :: Arbol (Cuadricula,(Int,Int),(Int,Int),Char) -> Arbol (Puntuacion, Cuadricula,(Int,Int),Char)
-maximiza (N (c,puntAct,pos,letra) []) | finalizado c || (fst puntAct) > (snd puntAct) = N (-1,c,pos,letra) [] 
+maximiza (N (c,puntAct,pos,letra) []) | finalizado c || (fst puntAct) < (snd puntAct) = N (-1,c,pos,letra) [] 
 						  | otherwise = N (0,c,pos,letra) []
 maximiza (N (c,puntAct,pos,letra) cs) = N (maximum (puntuaciones ps),c,pos,letra) ps
 	where ps = map minimiza cs
 
 -- Función que actualiza el valor de una cuadrícula a peor si resulta en un movimiento no favorable
 minimiza :: Arbol (Cuadricula,(Int,Int),(Int,Int),Char) -> Arbol (Puntuacion, Cuadricula,(Int,Int),Char)
-minimiza (N (c,puntAct,pos,letra) []) | finalizado c || (fst puntAct) > (snd puntAct) = N (1,c,pos,letra) [] 
+minimiza (N (c,puntAct,pos,letra) []) | finalizado c || (fst puntAct) < (snd puntAct) = N (1,c,pos,letra) [] 
 						  | otherwise = N (0,c,pos,letra) []
 minimiza (N (c,puntAct,pos,letra) cs) = N (minimum (puntuaciones ps),c,pos,letra) ps
 	where ps = map maximiza cs
